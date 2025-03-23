@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import QRCode from "qrcode";
 import "./Wallet.css";
 
-function Wallet({ token }) {
+function Wallet({ token, logout }) {
   const [address] = useState(localStorage.getItem("address") || "");
   const [receiver, setReceiver] = useState("");
   const [balance, setBalance] = useState(null);
@@ -13,10 +13,19 @@ function Wallet({ token }) {
   const [transferAmount, setTransferAmount] = useState("");
   const [transferMethod, setTransferMethod] = useState("");
   const [transferStatus, setTransferStatus] = useState("");
-  const [showTransferSection, setShowTransferSection] = useState(false);
   const [qrCodeData, setQrCodeData] = useState(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [isTransferInitiated, setIsTransferInitiated] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState(null);
+  const [storedQrCode, setStoredQrCode] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState(null);
+  const [testInput, setTestInput] = useState(""); // Separate state for test input
+
+  // Refs for input fields
+  const receiverInputRef = useRef(null);
+  const transferAmountInputRef = useRef(null);
+  const convertAmountInputRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -38,7 +47,54 @@ function Wallet({ token }) {
 
   useEffect(() => {
     if (token) fetchData();
-  }, [token, fetchData]);
+  }, [token]);
+
+  // Log state changes to confirm updates
+  useEffect(() => {
+    console.log("Receiver State Updated:", receiver);
+    if (receiverInputRef.current) {
+      console.log("Receiver Input DOM Value:", receiverInputRef.current.value);
+      // Force DOM update
+      receiverInputRef.current.value = receiver;
+    }
+  }, [receiver]);
+
+  useEffect(() => {
+    console.log("Transfer Amount State Updated:", transferAmount);
+    if (transferAmountInputRef.current) {
+      console.log("Transfer Amount Input DOM Value:", transferAmountInputRef.current.value);
+      transferAmountInputRef.current.value = transferAmount;
+    }
+  }, [transferAmount]);
+
+  useEffect(() => {
+    console.log("Test Input State Updated:", testInput);
+  }, [testInput]);
+
+  // Add a global event listener to debug input events
+  useEffect(() => {
+    const handleInputEvent = (e) => {
+      console.log("Input Event Captured:", e.type, e.target);
+    };
+
+    const handleKeyDown = (e) => {
+      console.log("KeyDown Event Captured:", e.key, e.target);
+    };
+
+    const handleKeyPress = (e) => {
+      console.log("KeyPress Event Captured:", e.key, e.target);
+    };
+
+    document.addEventListener("input", handleInputEvent);
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keypress", handleKeyPress);
+
+    return () => {
+      document.removeEventListener("input", handleInputEvent);
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keypress", handleKeyPress);
+    };
+  }, []);
 
   const convertToECash = async () => {
     try {
@@ -64,10 +120,11 @@ function Wallet({ token }) {
   const createToken = async (method = "") => {
     if (!receiver) {
       console.log("Validation failed: Receiver address is required");
-      setTransferStatus("Please enter a receiver address");
+      setTransferStatus("Please enter a receiver address or phone number");
       setIsTransferInitiated(false);
       setQrCodeData(null);
       setQrCodeUrl("");
+      setPaymentDetails(null);
       return false;
     }
     if (!transferAmount || isNaN(transferAmount) || transferAmount <= 0) {
@@ -78,6 +135,7 @@ function Wallet({ token }) {
       setIsTransferInitiated(false);
       setQrCodeData(null);
       setQrCodeUrl("");
+      setPaymentDetails(null);
       return false;
     }
 
@@ -133,7 +191,16 @@ function Wallet({ token }) {
         response.data.name = "unknown";
       }
 
-      if (method === "qr") {
+      const details = {
+        method,
+        amount: transferAmount,
+        senderAddress: address,
+        receiverAddress: receiver,
+        tokenId: response.data.tokenId,
+        timestamp: response.data.timestamp,
+      };
+
+      if (method === "qr" || method === "number") {
         const qrData = {
           tokenId: response.data.tokenId,
           amount: response.data.amount,
@@ -154,6 +221,13 @@ function Wallet({ token }) {
         const qrString = JSON.stringify(qrData);
         const qrCodeDataUrl = await QRCode.toDataURL(qrString, { width: 256 });
         setQrCodeUrl(qrCodeDataUrl);
+        details.qrCodeUrl = qrCodeDataUrl;
+
+        setStoredQrCode({
+          url: qrCodeDataUrl,
+          amount: transferAmount,
+          receiver,
+        });
 
         console.log("QR Code String:", qrString);
         console.log("QR Code Data URL:", qrCodeDataUrl);
@@ -162,6 +236,7 @@ function Wallet({ token }) {
         setQrCodeUrl("");
       }
 
+      setPaymentDetails(details);
       setMessage(response.data.message || "Token created");
       setTransferStatus(
         method
@@ -181,6 +256,7 @@ function Wallet({ token }) {
       );
       setQrCodeData(null);
       setQrCodeUrl("");
+      setPaymentDetails(null);
       setIsTransferInitiated(false);
       return false;
     }
@@ -188,75 +264,27 @@ function Wallet({ token }) {
 
   const showTransferOptions = (method) => {
     setTransferMethod(method);
-    setShowTransferSection(true);
     setTransferStatus("");
     setQrCodeData(null);
     setQrCodeUrl("");
+    setPaymentDetails(null);
     setIsTransferInitiated(false);
-  };
 
-  const initiateTransfer = async () => {
-    const success = await createToken(transferMethod);
-    if (!success) {
-      return;
-    }
-  };
-
-  const claimToken = async (tokenId) => {
-    try {
-      if (!tokenId) {
-        setMessage("Please provide a valid token ID to claim");
-        return;
-      }
-      const response = await axios.post(
-        "http://localhost:5000/claimToken",
-        { tokenId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setMessage(response.data.message);
-      setBalance(response.data.balance);
-      fetchData();
-    } catch (error) {
-      console.error("Error claiming token:", error);
-      setMessage(error.response?.data?.error || "Error claiming token");
-    }
-  };
-
-  const tokens = transactions
-    .filter((tx) => tx.tokenId && tx.type === "token_sent")
-    .map((tx) => tx.tokenId);
-  const receivableTokens = transactions
-    .filter(
-      (tx) =>
-        tx.tokenId && tx.type === "token_sent" && tx.userAddress !== address
-    )
-    .map((tx) => tx.tokenId);
-
-  return (
-    <div className="wallet-container">
-      <header className="wallet-header">
-        <h1>e-Rupee Wallet</h1>
-        <p className="wallet-address">Address: {address}</p>
-      </header>
-
-      <div className="wallet-card">
-        <div className="wallet-balance">
-          <h2>Balance: ₹{balance !== null ? balance : 0}</h2>
-          <p className="wallet-tokens">Tokens Sent: {tokens.length || 0}</p>
-          <p className="wallet-transactions">
-            Transactions: {transactions.length}
-          </p>
-        </div>
-
-        <div className="convert-section">
+    let content;
+    if (method === "convert") {
+      content = (
+        <>
           <h3>Convert to E-Cash</h3>
           <div className="input-group">
             <input
               type="number"
               placeholder="Enter amount (e.g., 1000)"
               value={convertAmount}
-              onChange={(e) => setConvertAmount(e.target.value)}
-              className={convertAmount ? "filled" : ""}
+              onChange={(e) => {
+                console.log("Convert Amount Input:", e.target.value);
+                setConvertAmount(e.target.value);
+              }}
+              ref={convertAmountInputRef}
             />
             <label>Amount</label>
           </div>
@@ -272,104 +300,143 @@ function Wallet({ token }) {
               {message}
             </p>
           )}
-        </div>
-
-        <div className="actions-section">
-          <h3>Transfer E-Cash</h3>
-          <div className="transfer-options">
-            <button
-              onClick={() => showTransferOptions("qr")}
-              className="action-tile"
-            >
-              <span className="action-icon">📷</span>
-              <span className="action-label">QR Code</span>
-            </button>
-            <button
-              onClick={() => showTransferOptions("bluetooth")}
-              className="action-tile"
-            >
-              <span className="action-icon">📡</span>
-              <span className="action-label">Bluetooth</span>
-            </button>
-            <button
-              onClick={() => showTransferOptions("nfc")}
-              className="action-tile"
-            >
-              <span className="action-icon">📱</span>
-              <span className="action-label">NFC (Mock)</span>
-            </button>
+        </>
+      );
+    } else if (method === "request") {
+      content = (
+        <>
+          <h3>Request Money</h3>
+          <p>Feature coming soon: Request money from contacts.</p>
+        </>
+      );
+    } else if (method === "change_mpin") {
+      content = (
+        <>
+          <h3>Change MPIN</h3>
+          <p>Feature coming soon: Change your MPIN for secure transactions.</p>
+        </>
+      );
+    } else if (method === "pay_upi") {
+      content = (
+        <>
+          <h3>Pay via UPI ID</h3>
+          <div className="input-group">
+            {/* Switch to uncontrolled input with ref */}
+            <input
+              type="text"
+              placeholder="Enter UPI ID (e.g., user@bank)"
+              defaultValue={receiver}
+              ref={receiverInputRef}
+              onInput={(e) => {
+                console.log("Receiver Input (Uncontrolled):", e.target.value);
+                setReceiver(e.target.value);
+              }}
+            />
+            <label>UPI ID</label>
           </div>
-        </div>
-
-        {showTransferSection && (
-          <div className="transfer-section">
-            <h3>Transfer via {transferMethod.toUpperCase()}</h3>
-            <div className="input-group">
-              <input
-                type="number"
-                placeholder="Enter amount (e.g., 500)"
-                value={transferAmount}
-                onChange={(e) => setTransferAmount(e.target.value)}
-                className={transferAmount ? "filled" : ""}
-              />
-              <label>Amount</label>
-            </div>
-            <div className="input-group">
-              <input
-                placeholder="Receiver Address"
-                value={receiver}
-                onChange={(e) => setReceiver(e.target.value)}
-                className={receiver ? "filled" : ""}
-              />
-              <label>Receiver Address</label>
-            </div>
-            <button onClick={initiateTransfer} className="action-button">
-              Initiate Transfer
-            </button>
-            {transferMethod === "qr" && qrCodeUrl && (
-              <div className="qr-code">
-                <p>{isTransferInitiated ? "Processing..." : "Scan to Claim"}</p>
-                <img src={qrCodeUrl} alt="QR Code" />
-              </div>
-            )}
-            {transferStatus && (
-              <p
-                className={`message ${
-                  transferStatus.includes("successful") ? "success" : "error"
-                }`}
-              >
-                {transferStatus}
-              </p>
-            )}
+          <div className="input-group">
+            <input
+              type="number"
+              placeholder="Enter amount (e.g., 500)"
+              defaultValue={transferAmount}
+              ref={transferAmountInputRef}
+              onInput={(e) => {
+                console.log("Transfer Amount Input (Uncontrolled):", e.target.value);
+                setTransferAmount(e.target.value);
+              }}
+            />
+            <label>Amount</label>
           </div>
-        )}
-
-        <div className="incentives-section">
-          <h3>Incentives</h3>
-          <p>Consumer: Earn 2% cashback on every transfer!</p>
-          <p>Merchant: 0% MDR on first 100 transactions!</p>
-        </div>
-
-        <div className="claim-section">
-          <h3>Claim Received Tokens</h3>
-          {receivableTokens.length ? (
-            receivableTokens.map((tokenId) => (
-              <div key={tokenId} className="claim-item">
-                <span>{tokenId}</span>
-                <button
-                  onClick={() => claimToken(tokenId)}
-                  className="claim-button"
-                >
-                  Claim
-                </button>
-              </div>
-            ))
-          ) : (
-            <p>No tokens to claim</p>
+          <button onClick={initiateTransfer} className="action-button">
+            Initiate Transfer
+          </button>
+          {transferStatus && !paymentDetails && (
+            <p
+              className={`message ${
+                transferStatus.includes("successful") ? "success" : "error"
+              }`}
+            >
+              {transferStatus}
+            </p>
           )}
-        </div>
+        </>
+      );
+    } else {
+      content = (
+        <>
+          <h3>
+            {method === "qr"
+              ? "Scan QR Code"
+              : method === "number"
+              ? "Pay with Number"
+              : method === "bank"
+              ? "Bank Transfer"
+              : method === "e_money"
+              ? "e-Money Transfer"
+              : "Offline Transfer"}
+          </h3>
+          <div className="input-group">
+            <input
+              type="number"
+              placeholder="Enter amount (e.g., 500)"
+              defaultValue={transferAmount}
+              ref={transferAmountInputRef}
+              onInput={(e) => {
+                console.log("Transfer Amount Input (Uncontrolled):", e.target.value);
+                setTransferAmount(e.target.value);
+              }}
+            />
+            <label>Amount</label>
+          </div>
+          <div className="input-group">
+            <input
+              placeholder={
+                method === "number"
+                  ? "Enter Phone Number"
+                  : method === "bank"
+                  ? "Enter Bank Account Details"
+                  : "Receiver Address"
+              }
+              defaultValue={receiver}
+              ref={receiverInputRef}
+              onInput={(e) => {
+                console.log("Receiver Input (Uncontrolled):", e.target.value);
+                setReceiver(e.target.value);
+              }}
+            />
+            <label>
+              {method === "number"
+                ? "Phone Number"
+                : method === "bank"
+                ? "Bank Account"
+                : "Receiver Address"}
+            </label>
+          </div>
+          <button onClick={initiateTransfer} className="action-button">
+            Initiate Transfer
+          </button>
+          {transferStatus && !paymentDetails && (
+            <p
+              className={`message ${
+                transferStatus.includes("successful") ? "success" : "error"
+              }`}
+            >
+              {transferStatus}
+            </p>
+          )}
+        </>
+      );
+    }
 
-        <div className="transactions-section">
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
+
+  const showBottomOptions = (option) => {
+    let content;
+    if (option === "history") {
+      content = (
+        <>
           <h3>Transaction History</h3>
           {transactions.length ? (
             <ul className="transaction-list">
@@ -387,6 +454,243 @@ function Wallet({ token }) {
           ) : (
             <p>No transactions yet</p>
           )}
+        </>
+      );
+    } else if (option === "bank_balance") {
+      content = (
+        <>
+          <h3>Bank Balance</h3>
+          <p>Feature coming soon: Check your bank balance here.</p>
+          <p>Current Bank Balance: ₹10,000 (mock data)</p>
+        </>
+      );
+    } else if (option === "ecash_balance") {
+      content = (
+        <>
+          <h3>eCash Balance</h3>
+          {balance !== null ? (
+            <p>Current eCash Balance: ₹{balance}</p>
+          ) : (
+            <p>Loading balance...</p>
+          )}
+        </>
+      );
+    }
+
+    setModalContent(content);
+    setIsModalOpen(true);
+  };
+
+  const initiateTransfer = async () => {
+    const success = await createToken(transferMethod);
+    if (!success) {
+      return;
+    }
+  };
+
+  const paymentDetailsContent = paymentDetails && (
+    <>
+      {(paymentDetails.method === "qr" || paymentDetails.method === "number") &&
+        paymentDetails.qrCodeUrl && (
+          <div className="qr-code">
+            <p>Scan to Claim</p>
+            <img src={paymentDetails.qrCodeUrl} alt="QR Code" />
+          </div>
+        )}
+      {paymentDetails.method === "bank" && (
+        <p>Bank Transfer Initiated: Please check your bank account.</p>
+      )}
+      {paymentDetails.method === "e_money" && (
+        <p>e-Money Transfer Initiated: Please confirm with the receiver.</p>
+      )}
+      {paymentDetails.method === "offline" && (
+        <p>Offline Transfer Initiated: Please complete the transfer offline.</p>
+      )}
+      {paymentDetails.method === "pay_upi" && (
+        <p>UPI Transfer Initiated: Please confirm with the receiver.</p>
+      )}
+      <p>Amount: ₹{paymentDetails.amount}</p>
+      <p>Sender Address: {paymentDetails.senderAddress}</p>
+      <p>Receiver Address: {paymentDetails.receiverAddress}</p>
+      <p>Token ID: {paymentDetails.tokenId}</p>
+      <button
+        onClick={() => {
+          setPaymentDetails(null);
+          setModalContent(null);
+          setIsModalOpen(false);
+        }}
+        className="action-button"
+      >
+        Back to Transfer Options
+      </button>
+    </>
+  );
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalContent(null);
+    setPaymentDetails(null);
+    setTransferStatus("");
+    setMessage("");
+  };
+
+  return (
+    <div className="wallet-container">
+      <header className="wallet-header">
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Pay friends and merchants"
+            disabled
+            className="search-input"
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+        <div className="profile-icon">👤</div>
+        <button onClick={logout} className="logout-button">
+          Logout
+        </button>
+      </header>
+
+      <div className="banner">
+        <h2>e-Rupee Wallet: Go Cashless!</h2>
+        <button className="banner-button">Apply Now</button>
+      </div>
+
+      <div className="wallet-content">
+        {/* Test input field with separate state */}
+        <div style={{ margin: "1rem 0", textAlign: "center" }}>
+          <input
+            type="text"
+            placeholder="Test input field (separate state)"
+            value={testInput}
+            onChange={(e) => {
+              console.log("Test Input (Separate State):", e.target.value);
+              setTestInput(e.target.value);
+            }}
+            className="test-input"
+          />
+        </div>
+
+        <div className="actions-section">
+          <div className="transfer-options">
+            <button
+              onClick={() => showTransferOptions("qr")}
+              className="action-tile"
+            >
+              <span className="action-icon">📷</span>
+              <span className="action-label">Scan any QR code</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("number")}
+              className="action-tile"
+            >
+              <span className="action-icon">👥</span>
+              <span className="action-label">Pay with number</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("request")}
+              className="action-tile"
+            >
+              <span className="action-icon">📞</span>
+              <span className="action-label">Request money</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("bank")}
+              className="action-tile"
+            >
+              <span className="action-icon">🏦</span>
+              <span className="action-label">Bank transfer</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("pay_upi")}
+              className="action-tile"
+            >
+              <span className="action-icon">💳</span>
+              <span className="action-label">Pay UPI ID</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("e_money")}
+              className="action-tile"
+            >
+              <span className="action-icon">💸</span>
+              <span className="action-label">e-Money transfer</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("change_mpin")}
+              className="action-tile"
+            >
+              <span className="action-icon">🔒</span>
+              <span className="action-label">Change MPIN</span>
+            </button>
+            <button
+              onClick={() => showTransferOptions("offline")}
+              className="action-tile"
+            >
+              <span className="action-icon">📱</span>
+              <span className="action-label">Offline transfer</span>
+            </button>
+          </div>
+        </div>
+
+        {isModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <button className="modal-close-button" onClick={closeModal}>
+                ✕
+              </button>
+              <div className="modal-body">
+                {paymentDetails ? paymentDetailsContent : modalContent}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="send-money-section">
+          {storedQrCode ? (
+            <div className="stored-qr">
+              <p>Stored QR Code for Transfer:</p>
+              <img src={storedQrCode.url} alt="Stored QR Code" />
+              <p>Amount: ₹{storedQrCode.amount}</p>
+              <p>Receiver: {storedQrCode.receiver}</p>
+              <div className="more-options">
+                <button className="option-button">Share QR</button>
+                <button className="option-button">Download QR</button>
+                <button
+                  className="option-button"
+                  onClick={() => setStoredQrCode(null)}
+                >
+                  Clear QR
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p>UPI ID: {address}</p>
+          )}
+        </div>
+
+        <div className="bottom-options-section">
+          <button
+            onClick={() => showBottomOptions("history")}
+            className="bottom-option-tile"
+          >
+            <span className="bottom-option-icon">📜</span>
+            <span className="bottom-option-label">Transaction History</span>
+          </button>
+          <button
+            onClick={() => showBottomOptions("bank_balance")}
+            className="bottom-option-tile"
+          >
+            <span className="bottom-option-icon">🏦</span>
+            <span className="bottom-option-label">Bank Balance</span>
+          </button>
+          <button
+            onClick={() => showBottomOptions("ecash_balance")}
+            className="bottom-option-tile"
+          >
+            <span className="bottom-option-icon">💰</span>
+            <span className="bottom-option-label">eCash Balance</span>
+          </button>
         </div>
       </div>
     </div>

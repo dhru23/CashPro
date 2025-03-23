@@ -1,38 +1,72 @@
 import React, { useState } from "react";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import Wallet from "./components/Wallet";
-import "./App.css";
+import ChangeMPIN from "./components/ChangeMPIN";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token") || "");
-  const navigate = useNavigate();
 
-  const logout = () => {
-    setToken("");
+  const handleLogin = (newToken, address) => {
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("address", address);
+    setToken(newToken);
+  };
+
+  const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("address");
-    navigate("/login");
+    setToken("");
   };
 
   return (
-    <div className="App">
       <Routes>
-        <Route path="/login" element={<Login setToken={setToken} />} />
-        <Route path="/" element={<Register />} />
+        <Route
+          path="/login"
+          element={
+            token ? (
+              <Navigate to="/wallet" />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            token ? (
+              <Navigate to="/wallet" />
+            ) : (
+              <Register />
+            )
+          }
+        />
         <Route
           path="/wallet"
           element={
             token ? (
-              <Wallet token={token} logout={logout} /> // Pass logout to Wallet
+              <Wallet token={token} logout={handleLogout} />
             ) : (
-              <p>Please login to access your wallet.</p>
+              <Navigate to="/login" />
             )
           }
         />
+        <Route
+          path="/change-mpin"
+          element={
+            token ? (
+              <ChangeMPIN token={token} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/"
+          element={<Navigate to={token ? "/wallet" : "/login"} />}
+        />
       </Routes>
-    </div>
   );
 }
 

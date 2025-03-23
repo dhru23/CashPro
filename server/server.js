@@ -152,6 +152,68 @@ app.post("/register", async (req, res) => {
   }
 });
 
+// Verify user with old MPIN or PAN card number
+app.post("/verify-user", authMiddleware, async (req, res) => {
+  const { oldMpin, panCard } = req.body;
+  const userAddress = req.user.address;
+
+  try {
+    const user = await User.findOne({ address: userAddress });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    let verified = false;
+    if (oldMpin) {
+      // Verify old MPIN (compare with hashed MPIN in the database)
+      verified = await bcrypt.compare(oldMpin, user.mpin);
+    } else if (panCard) {
+      // Verify PAN card number
+      verified = user.panCard === panCard;
+    } else {
+      return res.status(400).json({ error: "Please provide either old MPIN or PAN card number" });
+    }
+
+    if (!verified) {
+      return res.status(400).json({ verified: false, error: "Invalid MPIN or PAN card number" });
+    }
+
+    res.json({ verified: true });
+  } catch (error) {
+    console.error("Error verifying user:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Update MPIN
+app.post("/update-mpin", authMiddleware, async (req, res) => {
+  const { newMpin } = req.body;
+  const userAddress = req.user.address;
+
+  try {
+    // Validate new MPIN (6 digits)
+    const mpinRegex = /^\d{6}$/;
+    if (!newMpin || !mpinRegex.test(newMpin)) {
+      return res.status(400).json({ error: "New MPIN must be a 6-digit number" });
+    }
+
+    const user = await User.findOne({ address: userAddress });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Hash the new MPIN before saving
+    const hashedMpin = await bcrypt.hash(newMpin, 10);
+    user.mpin = hashedMpin;
+    await user.save();
+
+    res.json({ message: "MPIN updated successfully" });
+  } catch (error) {
+    console.error("Error updating MPIN:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 app.post("/login", async (req, res) => {
   const { mobileNo, password } = req.body;
   try {

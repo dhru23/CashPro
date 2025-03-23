@@ -1,0 +1,371 @@
+/* Wallet Container */
+.wallet-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* Header */
+.wallet-header {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.wallet-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #0c4a6e;
+  margin-bottom: 10px;
+}
+
+.wallet-address {
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+/* Wallet Card */
+.wallet-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  max-width: 800px;
+  margin: 0 auto;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Balance Section */
+.wallet-balance {
+  text-align: center;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.wallet-balance h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0c4a6e;
+  margin-bottom: 10px;
+}
+
+.wallet-tokens,
+.wallet-transactions {
+  font-size: 1rem;
+  color: #64748b;
+}
+
+/* Section Headings */
+h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #0c4a6e;
+  margin-bottom: 20px;
+}
+
+/* Input Group */
+.input-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: #f8fafc;
+}
+
+.input-group input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+.input-group label {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  background: #f8fafc;
+  padding: 0 6px;
+}
+
+.input-group input:focus + label,
+.input-group input.filled + label {
+  top: -10px;
+  font-size: 0.85rem;
+  color: #38bdf8;
+}
+
+/* Buttons */
+.action-button {
+  background: #38bdf8;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.action-button:hover {
+  background: #0ea5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+}
+
+.action-button:active {
+  transform: scale(0.98);
+}
+
+/* Transfer Options (Action Tiles) */
+.actions-section {
+  margin-bottom: 30px;
+}
+
+.transfer-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  justify-items: center;
+}
+
+.action-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 15px;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.action-tile:hover {
+  background: #eff6ff;
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+}
+
+.action-icon {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.action-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #0c4a6e;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Transfer Section */
+.transfer-section {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.qr-code {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.qr-code p {
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.qr-code img {
+  border: 2px solid #bfdbfe;
+  border-radius: 8px;
+}
+
+/* Incentives Section */
+.incentives-section {
+  text-align: center;
+  padding: 20px;
+  background: #eff6ff;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.incentives-section p {
+  font-size: 1rem;
+  color: #475569;
+  margin: 5px 0;
+}
+
+/* Claim Section */
+.claim-section {
+  margin-bottom: 30px;
+}
+
+.claim-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.claim-item span {
+  font-size: 0.95rem;
+  color: #64748b;
+}
+
+.claim-button {
+  background: #38bdf8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.claim-button:hover {
+  background: #0ea5e9;
+  transform: translateY(-2px);
+}
+
+.claim-button:active {
+  transform: scale(0.98);
+}
+
+/* Transactions Section */
+.transactions-section {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.transaction-list {
+  list-style: none;
+  padding: 0;
+}
+
+.transaction-item {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #64748b;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Message Styling */
+.message {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.message.success {
+  color: #16a34a;
+}
+
+.message.error {
+  color: #dc2626;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wallet-card {
+    padding: 20px;
+  }
+
+  .wallet-header h1 {
+    font-size: 2rem;
+  }
+
+  .wallet-balance h2 {
+    font-size: 1.6rem;
+  }
+
+  .transfer-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .action-tile {
+    width: 80px;
+    height: 80px;
+  }
+
+  .action-icon {
+    font-size: 1.2rem;
+  }
+
+  .action-label {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wallet-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .wallet-address {
+    font-size: 0.85rem;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+
+  .action-button,
+  .claim-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .transfer-options {
+    grid-template-columns: 1fr;
+  }
+
+  .action-tile {
+    width: 100%;
+    max-width: 120px;
+    height: 100px;
+  }
+}

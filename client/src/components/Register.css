@@ -1,0 +1,136 @@
+/* Reset default browser styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #e6f0fa; /* Same background as Login */
+}
+
+.register-card {
+  background: white;
+  padding: 2rem; /* Same padding as Login */
+  border-radius: 15px; /* Same rounded corners as Login */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Same shadow as Login */
+  width: 100%;
+  max-width: 400px; /* Same width as Login */
+  text-align: center; /* Center all inline elements */
+}
+
+.register-title {
+  font-size: 1.75rem; /* Same as Login */
+  font-weight: bold;
+  color: #1a3c34; /* Same dark blue as Login */
+  margin-bottom: 0.5rem;
+}
+
+.register-subtitle {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center all form children */
+  gap: 1rem;
+  width: 100%; /* Ensure the form takes the full width of the card */
+}
+
+.input-group {
+  width: 100%; /* Full width to ensure centering */
+  display: flex;
+  justify-content: center; /* Center the input within the input-group */
+}
+
+.input-group input {
+  width: 100%;
+  max-width: 100%; /* Prevent overflow */
+  padding: 0.75rem;
+  border: 1px solid #b3d4fc; /* Same light blue border as Login */
+  border-radius: 5px;
+  font-size: 1rem;
+  color: #333;
+  background-color: #f9f9f9; /* Same light gray background as Login */
+  box-sizing: border-box;
+  text-align: left; /* Ensure placeholder text is left-aligned */
+}
+
+.input-group input::placeholder {
+  color: #999; /* Same placeholder color as Login */
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%; /* Ensure the checkbox group is full width */
+  justify-content: center; /* Center the checkbox and label */
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.bank-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  width: 100%; /* Ensure bank details section is full width */
+}
+
+.register-button {
+  width: 100%; /* Same width as Login button */
+  background-color: #00aaff; /* Same blue as Login */
+  color: white;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 10px; /* Same rounded corners as Login */
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.register-button:hover {
+  background-color: #0088cc; /* Same hover color as Login */
+}
+
+.login-link {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 1rem;
+}
+
+.login-link a {
+  color: #6a0dad; /* Same purple as Login */
+  text-decoration: underline;
+}
+
+.login-link a:hover {
+  color: #4b077a; /* Same hover color as Login */
+}
+
+.message {
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.message.error {
+  color: red;
+}
+
+.message.success {
+  color: green;
+}
